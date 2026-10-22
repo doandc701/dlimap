@@ -1,0 +1,35 @@
+{
+  "name": "dlimap",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "start": "node --env-file-if-exists=.env .output/server/index.mjs",
+    "dev:lan": "nuxt dev --public --https",
+    "share": "ngrok http 3000",
+    "postinstall": "nuxt prepare",
+    "icons": "node scripts/gen-map-icons.mjs"
+  },
+  "dependencies": {
+    "@primeuix/themes": "^2.0.3",
+    "maplibre-gl": "^6.15.0",
+    "nuxt": "^4.6.2",
+    "opening_hours": "^3.15.0",
+    "primevue": "^4.5.5",
+    "vue": "^3.5.44"
+  },
+  "devDependencies": {
+    "@iconify-json/material-symbols": "^1.2.95",
+    "@iconify/tailwind4": "^1.2.3",
+    "@iconify/utils": "^3.1.7",
+    "@primevue/nuxt-module": "^4.5.5",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/geojson": "^7946.0.16",
+    "tailwindcss": "^4.3.3",
+    "tailwindcss-primeui": "^0.6.1",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.3.13"
+  }
+}

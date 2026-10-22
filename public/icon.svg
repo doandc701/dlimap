@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2f7bff"/>
+      <stop offset="1" stop-color="#0a3fb0"/>
+    </linearGradient>
+    <clipPath id="tile"><rect width="512" height="512" rx="112"/></clipPath>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#bg)"/>
+    <!-- the road -->
+    <path d="M-20 478C90 400 170 470 256 446S420 392 540 456" fill="none" stroke="#0b1f5c" stroke-width="78" stroke-linecap="round"/>
+    <path d="M-20 478C90 400 170 470 256 446S420 392 540 456" fill="none" stroke="#f5c400" stroke-width="9" stroke-dasharray="30 26" stroke-linecap="round"/>
+  </g>
+  <!-- map pin -->
+  <path d="M256 438C206 372 116 306 116 210a140 140 0 0 1 280 0c0 96-90 162-140 228Z" fill="#fff"/>
+  <!-- speed-limit ring + navigation arrow -->
+  <circle cx="256" cy="210" r="96" fill="#e02424"/>
+  <circle cx="256" cy="210" r="68" fill="#fff"/>
+  <path d="M256 150 296 262 256 240 216 262Z" fill="#0b5fff"/>
+</svg>
