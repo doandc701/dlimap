@@ -1,15 +1,44 @@
 {
-  "name": "DLiMap – Trợ lý giao thông",
+  "name": "DLiMap · Bản đồ, dẫn đường & cảnh báo giao thông",
   "short_name": "DLiMap",
+  "description": "Dẫn đường giọng nói tiếng Việt, cảnh báo tốc độ & camera phạt nguội, kẹt xe thời gian thực, phí BOT – miễn phí.",
+  "lang": "vi",
+  "dir": "ltr",
+  "id": "/",
+  "categories": [
+    "navigation",
+    "travel",
+    "utilities"
+  ],
   "start_url": "/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#0b1220",
   "theme_color": "#0b5fff",
   "icons": [
-    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

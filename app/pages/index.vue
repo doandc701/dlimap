@@ -102,6 +102,9 @@ const stopFirstFix = watch(() => pos.value.lngLat, (p) => {
 const wide = useState('wideScreen', () => window.matchMedia('(min-width: 900px)').matches)
 const selection = useSelection()
 
+// a shared place link (or a tapped place) names the tab / bookmark: "Bảo tàng Hà Nội · DLiMap"
+useHead(() => (selection.value?.kind === 'place' ? { title: `${selection.value.name} · DLiMap` } : {}))
+
 onMounted(() => {
   startGps()
   register()
@@ -133,6 +136,8 @@ function openSharedPlace() {
 
 <template>
   <main class="fixed inset-0" :class="{ car: carMode, nav: nav.active }">
+    <!-- the page's heading for search engines and screen readers (the map is the visible content) -->
+    <h1 class="sr-only">DLiMap · Bản đồ, dẫn đường &amp; cảnh báo giao thông</h1>
     <MapView @pick="onPick" @longpress="onLongPress" />
 
     <div class="pointer-events-none absolute inset-x-0 top-0 z-10 flex max-w-[480px] flex-col gap-2 px-2.5 pt-[calc(env(safe-area-inset-top)+10px)] min-[900px]:left-2.5 min-[900px]:pl-0">

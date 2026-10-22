@@ -14,6 +14,22 @@
   @keyframes boot-pulse { 50% { transform: scale(1.06); } }
   @media (prefers-reduced-motion: reduce) { .boot-splash img { animation: none; } }
 </style>
+<!-- for search engines and screen readers: what the app is, before any JavaScript runs -->
+<h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">DLiMap · Bản đồ, dẫn đường &amp; cảnh báo giao thông</h1>
+<noscript>
+  <div style="position:fixed;inset:0;z-index:2001;overflow:auto;background:#fff;color:#0f172a;padding:24px;font-family:system-ui,sans-serif;line-height:1.5">
+    <h2>DLiMap – trợ lý giao thông miễn phí trên trình duyệt</h2>
+    <p>Bản đồ và dẫn đường giọng nói tiếng Việt, cảnh báo tốc độ và camera phạt nguội, tình trạng kẹt xe thời gian thực, tính phí BOT và cao tốc.</p>
+    <ul>
+      <li>Dẫn đường cho ô tô, xe máy, xe đạp, đi bộ – đọc chỉ dẫn bằng tiếng Việt</li>
+      <li>Cảnh báo giới hạn tốc độ theo Thông tư 38/2024, camera phạt nguội, cấm vượt, hầm chui</li>
+      <li>Màu kẹt xe thời gian thực trên bản đồ, thời gian chậm thêm trên tuyến</li>
+      <li>Phí trạm BOT và cao tốc theo loại xe, có nguồn tra cứu</li>
+      <li>Dẫn đường cả khi mất mạng (hybrid), tìm nhà hàng, cây xăng, bãi đỗ xe quanh đây</li>
+    </ul>
+    <p><b>Hãy bật JavaScript để dùng DLiMap.</b></p>
+  </div>
+</noscript>
 <div class="boot-splash" id="bootSplashStatic" role="status" aria-label="Đang tải DLiMap">
   <img src="/icon.svg" alt="">
   <div class="w" aria-hidden="true"><span>D</span><span>L</span><span>i</span><span>M</span><span>a</span><span>p</span></div>
