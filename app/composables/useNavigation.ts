@@ -164,7 +164,8 @@ function createNavigation() {
     return pos.value.lngLat
   }
 
-  async function plan(from?: LngLat) {
+  /** Find routes to the destination; `from` (+ `heading`) is a reroute from the vehicle's position. */
+  async function plan(from?: LngLat, heading?: number) {
     const o = from ?? originLngLat()
     const d = nav.value.destination
     if (!o || !d) {
@@ -181,14 +182,24 @@ function createNavigation() {
       prefetchOtherModes(coords, mode, seq)
     }
     try {
-      const routes = await $fetch<RouteResult[]>('/api/route', { query: { coords, mode, alternatives: from ? '0' : '1' } })
+      const routes = await $fetch<RouteResult[]>('/api/route', {
+        query: { coords, mode, alternatives: from ? '0' : '1', heading: heading == null ? undefined : Math.round(heading) },
+      })
       if (seq !== planSeq) return
       nav.value.routes = routes
       nav.value.modeRoutes[mode] = routes
       nav.value.selected = 0
       nav.value.offlineRoute = false
+      if (from && nav.value.active) {
+        // rerouted while navigating: the new route's steps are numbered from 1 again
+        spoken.clear()
+        lastPrefetchStep = -1
+        offCount = 0
+      }
       saveOffline()
-      await loadPois()
+      // cameras / toll booths load in the background – the new route is usable right away
+      // (Overpass can take tens of seconds, and must not hold up the next reroute)
+      loadPois()
     } catch (e: any) {
       if (seq !== planSeq) return
       nav.value.modeRoutes[mode] = []
@@ -406,7 +417,10 @@ function createNavigation() {
       ? snapToLine(p, r.geometry, cum, Math.max(0, prev.index - 5), 300)
       : snapToLine(p, r.geometry, cum)
 
-    offCount = snap.dist > 50 ? offCount + 1 : 0
+    // off the route: further than 50 m, or than the GPS error when it is poor (under flyovers,
+    // between tall buildings), so a bad fix doesn't trigger reroutes while still on the route
+    const tolerance = Math.min(120, Math.max(50, pos.value.accuracy * 1.5))
+    offCount = snap.dist > tolerance ? offCount + 1 : 0
     const offRoute = offCount >= 3
 
     let stepIdx = 0
@@ -452,8 +466,9 @@ function createNavigation() {
     if (offRoute && !nav.value.loading && !nav.value.simulating && Date.now() - lastReroute > 15_000) {
       lastReroute = Date.now()
       if (online.value) {
-        say('Đang tìm lại đường', 'reroute', 15_000)
-        plan(p).then(() => { offCount = 0 })
+        say('Đang tìm lại đường', 'reroute', 10_000)
+        // keep going the way the vehicle is moving instead of being told to U-turn
+        plan(p, pos.value.speed > 5 ? pos.value.heading : undefined)
       } else {
         say('Bạn đã đi lệch tuyến. Mất kết nối, tiếp tục theo tuyến đã lưu', 'offline-off', 60_000)
       }

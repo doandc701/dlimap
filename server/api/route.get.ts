@@ -70,9 +70,11 @@ function fromOsrm(r: any, mode: TravelMode): RouteResult {
   return { mode, geometry, distance: r.distance, duration: r.duration, steps, segmentSpeeds }
 }
 
-async function osrm(base: string, coords: string, alternatives: boolean, mode: TravelMode): Promise<RouteResult[]> {
+async function osrm(base: string, coords: string, alternatives: boolean, mode: TravelMode, heading?: number): Promise<RouteResult[]> {
   // routing.openstreetmap.de serves each profile under its own base path, always named "driving"
-  const url = `${base}/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=true&annotations=speed&alternatives=${alternatives}`
+  // heading: leave the start point in the direction the vehicle is moving (no U-turn when rerouting)
+  const bearings = heading == null ? '' : `&bearings=${heading},60${';'.repeat(coords.split(';').length - 1)}`
+  const url = `${base}/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=true&annotations=speed&alternatives=${alternatives}${bearings}`
   const data = await cached(`route:${url}`, 10 * 60_000, () =>
     $fetch<{ code: string; routes: any[] }>(url, { timeout: 30000, retry: 2, retryDelay: 400 }),
   )
@@ -154,9 +156,12 @@ function fromValhalla(trip: any, mode: TravelMode): RouteResult {
   return { mode, geometry, distance: trip.summary.length * 1000, duration: trip.summary.time, steps, segmentSpeeds }
 }
 
-async function valhalla(base: string, coords: string, alternatives: boolean, mode: TravelMode): Promise<RouteResult[]> {
+async function valhalla(base: string, coords: string, alternatives: boolean, mode: TravelMode, heading?: number): Promise<RouteResult[]> {
   const body = {
-    locations: coords.split(';').map((c) => { const [lon, lat] = c.split(',').map(Number); return { lon, lat } }),
+    locations: coords.split(';').map((c, i) => {
+      const [lon, lat] = c.split(',').map(Number)
+      return i === 0 && heading != null ? { lon, lat, heading, heading_tolerance: 60 } : { lon, lat }
+    }),
     costing: 'motorcycle',
     alternates: alternatives ? 2 : 0,
     units: 'kilometers',
@@ -172,16 +177,20 @@ async function valhalla(base: string, coords: string, alternatives: boolean, mod
 const MODES: TravelMode[] = ['car', 'motorbike', 'bike', 'foot']
 
 export default defineEventHandler(async (event) => {
-  const { coords, alternatives, mode = 'car' } = getQuery(event) as { coords?: string; alternatives?: string; mode?: TravelMode }
+  const q = getQuery(event) as { coords?: string; alternatives?: string; mode?: TravelMode; heading?: string }
+  const { coords, alternatives, mode = 'car' } = q
+  // direction of travel at the start (rerouting); ignored on foot, where turning round is free
+  const h = q.heading != null && mode !== 'foot' ? Math.round(Number(q.heading)) : NaN
+  const heading = Number.isFinite(h) && h >= 0 && h < 360 ? h : undefined
   if (!coords || !/^[-\d.,;]+$/.test(coords)) throw createError({ statusCode: 400, statusMessage: 'coords không hợp lệ' })
   if (!MODES.includes(mode)) throw createError({ statusCode: 400, statusMessage: 'mode không hợp lệ' })
 
   const cfg = useRuntimeConfig()
   const alt = alternatives === '1'
   switch (mode) {
-    case 'motorbike': return valhalla(cfg.valhallaUrl, coords, alt, mode)
-    case 'bike': return osrm(cfg.osrmBikeUrl, coords, alt, mode)
+    case 'motorbike': return valhalla(cfg.valhallaUrl, coords, alt, mode, heading)
+    case 'bike': return osrm(cfg.osrmBikeUrl, coords, alt, mode, heading)
     case 'foot': return osrm(cfg.osrmFootUrl, coords, alt, mode)
-    default: return osrm(cfg.osrmUrl, coords, alt, mode)
+    default: return osrm(cfg.osrmUrl, coords, alt, mode, heading)
   }
 })
