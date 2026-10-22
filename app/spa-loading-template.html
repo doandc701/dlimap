@@ -1,0 +1,39 @@
+<!--
+  Shown before the app's JavaScript runs. Same look and letter-by-letter animation as
+  BootSplash.vue, which continues from window.__dlimapBoot.shown once the app has mounted.
+-->
+<style>
+  .boot-splash { position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.25rem; background: #ffffff; font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+  .boot-splash.dark { background: #111827; }
+  .boot-splash img { width: 96px; height: 96px; border-radius: 22%; box-shadow: 0 10px 30px -10px rgba(10, 63, 176, 0.6); animation: boot-pulse 1.6s ease-in-out infinite; }
+  .boot-splash .w { display: flex; font-size: 2.25rem; line-height: 2.5rem; font-weight: 800; letter-spacing: 0.02em; }
+  .boot-splash .w span { opacity: 0; transform: translateY(0.6em); transition: opacity 0.25s ease, transform 0.25s ease;
+    background-image: linear-gradient(135deg, #2f7bff, #0a3fb0); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .boot-splash.dark .w span { background-image: linear-gradient(135deg, #8ab4ff, #2f7bff); }
+  .boot-splash .w span.in { opacity: 1; transform: none; }
+  @keyframes boot-pulse { 50% { transform: scale(1.06); } }
+  @media (prefers-reduced-motion: reduce) { .boot-splash img { animation: none; } }
+</style>
+<div class="boot-splash" id="bootSplashStatic" role="status" aria-label="Đang tải DLiMap">
+  <img src="/icon.svg" alt="">
+  <div class="w" aria-hidden="true"><span>D</span><span>L</span><span>i</span><span>M</span><span>a</span><span>p</span></div>
+</div>
+<script>
+  (function () {
+    var el = document.getElementById('bootSplashStatic')
+    // match the theme the app will pick (saved setting, else the system): no white flash in dark mode
+    try {
+      var t = JSON.parse(localStorage.getItem('dlimap:settings') || '{}').theme || 'auto'
+      if (t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches)) el.classList.add('dark')
+    } catch (e) {}
+    // letters come in more and more slowly; the last one waits for the app (BootSplash.vue)
+    var letters = el.querySelectorAll('.w span')
+    var boot = (window.__dlimapBoot = { shown: 0, timer: 0 })
+    function creep() {
+      if (boot.shown >= letters.length - 1) return
+      letters[boot.shown++].className = 'in'
+      boot.timer = setTimeout(creep, 140 * Math.pow(1.3, boot.shown))
+    }
+    boot.timer = setTimeout(creep, 100)
+  })()
+</script>

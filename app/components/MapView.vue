@@ -17,6 +17,7 @@ const settings = useSettings()
 const { map, follow, pickMode } = useMap()
 const selection = useSelection()
 const trafficSummary = useTrafficSummary()
+const mapReady = useState('mapReady', () => false)
 const { state: nearbyState } = useNearby()
 const { pos } = usePosition()
 const { nav, route, selectRoute } = useNavigation()
@@ -360,6 +361,8 @@ onMounted(async () => {
   })
   m.on('dragstart', () => (follow.value = false))
   m.on('idle', () => trafficSummary.update(m))
+  // first complete render ends the page-load splash
+  m.once('idle', () => (mapReady.value = true))
   m.on('click', (e: MapMouseEvent) => {
     if (pickMode.value) {
       emit('pick', pickMode.value, [e.lngLat.lng, e.lngLat.lat])

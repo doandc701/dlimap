@@ -27,6 +27,8 @@ export default defineNuxtConfig({
   // listen on (and show) 127.0.0.1: on this machine "localhost" resolves to ::1 first,
   // where nothing listens, so http://localhost:3000 fails with ERR_CONNECTION_RESET
   devServer: { host: '127.0.0.1' },
+  // shown before the JavaScript loads; BootSplash.vue then continues with the same splash
+  spaLoadingTemplate: 'spa-loading-template.html',
   modules: ['@primevue/nuxt-module'],
   primevue: {
     importTheme: { as: 'DLiMapTheme', from: '~/theme/primevue' },

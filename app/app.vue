@@ -5,4 +5,5 @@ watchEffect(() => document.documentElement.classList.toggle('dark', isDark.value
 
 <template>
   <NuxtPage />
+  <BootSplash />
 </template>
