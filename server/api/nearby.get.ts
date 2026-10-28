@@ -58,14 +58,10 @@ const PHRASES: Record<NearbyCategory, string> = {
 
 async function fromNominatim(cat: NearbyCategory, lat: number, lon: number, radius: number): Promise<NearbyPlace[]> {
   const dLat = radius / 111_320, dLon = radius / (111_320 * Math.cos((lat * Math.PI) / 180))
-  const qs = new URLSearchParams({
+  const hits = await nominatim<{ osm_type: string; osm_id: number; lat: string; lon: string; name?: string; type: string; extratags?: Record<string, string> | null }[]>('search', {
     q: PHRASES[cat], format: 'jsonv2', limit: '40', bounded: '1', extratags: '1',
     viewbox: `${lon - dLon},${lat + dLat},${lon + dLon},${lat - dLat}`,
   })
-  const hits = await cached(`nnear:${qs}`, 3600_000, () =>
-    $fetch<{ osm_type: string; osm_id: number; lat: string; lon: string; name?: string; type: string; extratags?: Record<string, string> | null }[]>(
-      `${useRuntimeConfig().nominatimUrl}/search?${qs}`, { headers: nominatimHeaders, retry: 1, timeout: 10000 }),
-  )
   return hits
     .filter((h) => h.name)
     .map((h) => ({

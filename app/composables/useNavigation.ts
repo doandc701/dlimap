@@ -1,10 +1,14 @@
-import type { ClosedExpressway, LngLat, Poi, RouteResult, TollSource, TollStation, TravelMode, VehicleClass } from '#shared/types'
+import type { SearchResult, ClosedExpressway, LngLat, Poi, RouteResult, TollSource, TollStation, TravelMode, VehicleClass } from '#shared/types'
 
 export interface Place {
   name: string
   address?: string
   lat: number
   lon: number
+  /** from search: what it is (icon) and whether a typed house number is only placed on its street */
+  kind?: SearchResult['kind']
+  category?: string
+  approx?: boolean
 }
 
 export type AlongPoi = Poi & { along: number }

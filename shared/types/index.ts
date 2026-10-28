@@ -152,3 +152,19 @@ export interface NearbyPlace {
   kind?: string
   openingHours?: string
 }
+
+/** One search suggestion (geocoder result), shaped like Google Maps' autocomplete rows. */
+export interface SearchResult {
+  /** main line: place name, or "house number + street" for an address */
+  name: string
+  /** second line: street · ward · district · city */
+  address?: string
+  lat: number
+  lon: number
+  /** what the result is – picks the icon */
+  kind: 'address' | 'street' | 'area' | 'poi'
+  /** OSM value (restaurant, bus_stop, residential…) for the Vietnamese type label */
+  category?: string
+  /** house number not in the map data: the point is on the street, not at the house */
+  approx?: boolean
+}

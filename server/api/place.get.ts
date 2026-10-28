@@ -53,15 +53,11 @@ export default defineEventHandler(async (event): Promise<PlaceDetails | null> =>
 
 /** Nominatim search for the name around the tapped point, nearest match within 150 m. */
 async function fromNominatim(name: string, lat: number, lon: number): Promise<PlaceDetails | null> {
-  const base = useRuntimeConfig().nominatimUrl
   const d = 0.004
-  const qs = new URLSearchParams({
+  const hits = await nominatim<NominatimHit[]>('search', {
     q: name, format: 'jsonv2', extratags: '1', addressdetails: '1', limit: '5', bounded: '1',
     viewbox: `${lon - d},${lat + d},${lon + d},${lat - d}`,
-  })
-  const hits = await cached(`nplace:${qs}`, 24 * 3600_000, () =>
-    $fetch<NominatimHit[]>(`${base}/search?${qs}`, { headers: nominatimHeaders, retry: 1, timeout: 10000 }),
-  )
+  }, 24 * 3600_000)
   let best: { d: number; h: NominatimHit } | undefined
   for (const h of hits) {
     const dist = haversine([lon, lat], [+h.lon, +h.lat])

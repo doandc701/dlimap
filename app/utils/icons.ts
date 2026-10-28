@@ -37,6 +37,9 @@ export const ICON = {
   info: 'icon-[material-symbols--info-outline-rounded]',
   coords: 'icon-[material-symbols--my-location-rounded]',
   map: 'icon-[material-symbols--map-outline-rounded]',
+  road: 'icon-[material-symbols--road]',
+  area: 'icon-[material-symbols--location-city-rounded]',
+  school: 'icon-[material-symbols--school-outline-rounded]',
   // map buttons
   myLocation: 'icon-[material-symbols--my-location-rounded]',
   traffic: 'icon-[material-symbols--traffic-outline-rounded]',
@@ -116,4 +119,23 @@ export const REPORT_ICON: Record<string, IconName> = {
 export const POI_ICON: Record<string, IconName> = {
   speed_camera: 'speedCamera', red_light_camera: 'speedCamera', traffic_signals: 'signals',
   no_overtaking: 'noOvertaking', tunnel: 'tunnel', surveillance: 'surveillance', toll: 'toll',
+}
+
+/** Icon of a search result: by kind, and for places by OSM category (restaurant, hospital…). */
+export function searchIcon(kind: string | undefined, category?: string): IconName {
+  if (kind === 'street') return 'road'
+  if (kind === 'area') return 'area'
+  if (kind !== 'poi' || !category) return 'place'
+  if (/restaurant|fast_food|food_court/.test(category)) return 'restaurant'
+  if (/cafe|ice_cream/.test(category)) return 'cafe'
+  if (/hotel|motel|guest_house|hostel|apartment/.test(category)) return 'hotel'
+  if (/hospital|clinic|doctors|dentist/.test(category)) return 'hospital'
+  if (/pharmacy|chemist/.test(category)) return 'pharmacy'
+  if (/fuel|charging_station/.test(category)) return 'fuel'
+  if (/parking/.test(category)) return 'parking'
+  if (/bus_stop|bus_station|station|halt|subway|ferry/.test(category)) return 'transit'
+  if (/bank|atm/.test(category)) return 'atm'
+  if (/school|kindergarten|university|college/.test(category)) return 'school'
+  if (/attraction|museum|viewpoint|monument|memorial|temple|place_of_worship|park/.test(category)) return 'attraction'
+  return 'place'
 }

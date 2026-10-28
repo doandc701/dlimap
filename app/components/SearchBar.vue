@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import type { Place } from '~/composables/useNavigation'
+import type { LngLat } from '#shared/types'
 
 const emit = defineEmits<{ menu: [] }>()
 const { nav, plan, clear } = useNavigation()
-const { pickMode } = useMap()
+const { pickMode, map } = useMap()
+const { pos } = usePosition()
 const online = useOnline()
 
 /** which field the suggestion list is open for (shared so the page can hide what it would cover) */
@@ -15,16 +17,61 @@ const loading = ref(false)
 const recent = usePersisted<{ items: Place[] }>('recentPlaces', () => ({ items: [] }))
 const { saved } = useSavedPlaces()
 
+// Search as you type, gently: the free geocoders behind /api/geocode block clients that send too much.
+// Wait for a pause in typing and ≥ 3 characters, drop answers to queries already typed over, and
+// remember answers for this session (deleting a letter and typing it again costs nothing).
+const MIN_CHARS = 3
+const answers = new Map<string, Place[]>()
 let timer: ReturnType<typeof setTimeout> | undefined
+let inflight: AbortController | undefined
 watch(query, (q) => {
   clearTimeout(timer)
-  if (q.trim().length < 2) { results.value = []; return }
+  inflight?.abort()
+  const text = q.trim()
+  if (text.length < MIN_CHARS) { results.value = []; loading.value = false; return }
+  const near = nearParam()
+  // ~1 km grid: moving a little doesn't change the answer
+  const key = `${text.toLowerCase()}|${near?.split(',').map((v) => (+v).toFixed(2)).join(',') ?? ''}`
+  const known = answers.get(key)
+  if (known) { results.value = known; loading.value = false; return }
+  loading.value = true
   timer = setTimeout(async () => {
-    loading.value = true
-    try { results.value = await $fetch<Place[]>('/api/geocode', { query: { q } }) } catch { results.value = [] }
+    const ctrl = (inflight = new AbortController())
+    try {
+      const list = await $fetch<Place[]>('/api/geocode', { query: { q: text, near }, signal: ctrl.signal })
+      answers.set(key, list)
+      if (answers.size > 100) answers.delete(answers.keys().next().value!)
+      results.value = list
+    } catch {
+      if (ctrl.signal.aborted) return
+      results.value = []
+    }
     loading.value = false
-  }, 350)
+  }, 500)
 })
+
+/** Bias results to where the user is (GPS), else to what they're looking at (map centre). */
+function biasPoint(): LngLat | null {
+  if (pos.value.lngLat) return pos.value.lngLat
+  const c = map.value?.getCenter()
+  return c ? [c.lng, c.lat] : null
+}
+const nearParam = () => {
+  const p = biasPoint()
+  return p ? `${p[1].toFixed(4)},${p[0].toFixed(4)}` : undefined
+}
+
+/** "1,2 km" from the user / map centre, shown at the end of a row like Google Maps. */
+function distanceTo(p: Place): string {
+  const from = biasPoint()
+  return from ? formatDistance(haversine(from, [p.lon, p.lat])) : ''
+}
+
+/** Second line: type of place (for businesses) and short address. */
+function subtitle(p: Place): string {
+  const type = p.kind === 'poi' && p.category ? poiCategory(p.category, p.category) : p.kind === 'street' ? 'Đường' : undefined
+  return [type, p.address].filter(Boolean).join(' · ')
+}
 
 function focus(which: 'origin' | 'destination') {
   active.value = which
@@ -86,7 +133,7 @@ function swap() {
   else plan()
 }
 
-const list = computed(() => (query.value.trim().length >= 2 ? results.value : recent.value.items))
+const list = computed(() => (query.value.trim().length >= MIN_CHARS ? results.value : recent.value.items))
 
 /** no focus highlight on the fields (border keeps the resting form-field colour) */
 const NO_FOCUS = 'focus:border-surface-200 focus:shadow-none dark:focus:border-surface-700'
@@ -150,10 +197,28 @@ const NO_FOCUS = 'focus:border-surface-200 focus:shadow-none dark:focus:border-s
         </button>
       </template>
       <div v-if="!query && list.length" class="px-2.5 py-1.5 text-[13px] text-muted">Gần đây</div>
-      <button v-for="p in list" :key="`${p.lat},${p.lon}`" class="block w-full rounded-[10px] border-0 bg-transparent p-2.5 text-left hover:bg-bg-2" @mousedown.prevent="choose(p)">
-        <div class="truncate"><b>{{ p.name }}</b></div>
-        <div class="truncate text-[13px] text-muted">{{ p.address }}</div>
+      <!-- one row per result, like Google Maps: icon · name (typed part in bold) · type & address · distance -->
+      <button
+        v-for="p in list" :key="`${p.lat},${p.lon},${p.name}`"
+        class="flex w-full items-center gap-3 rounded-[10px] border-0 bg-transparent px-2.5 py-2 text-left hover:bg-bg-2"
+        @mousedown.prevent="choose(p)"
+      >
+        <span class="grid size-8 flex-none place-items-center rounded-full bg-bg-2 text-muted">
+          <AppIcon :name="query ? searchIcon(p.kind, p.category) : 'hours'" :size="18" />
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block truncate">
+            <template v-for="(part, i) in highlight(p.name, query)" :key="i"><b v-if="part.b">{{ part.t }}</b><span v-else>{{ part.t }}</span></template>
+          </span>
+          <span class="block truncate text-[13px] text-muted">
+            <span v-if="p.approx" class="font-semibold text-warn">Vị trí gần đúng · </span>{{ subtitle(p) }}
+          </span>
+        </span>
+        <span v-if="distanceTo(p)" class="flex-none text-xs text-muted">{{ distanceTo(p) }}</span>
       </button>
+      <div v-if="query.trim().length >= MIN_CHARS && !loading && online && !results.length" class="px-2.5 py-2 text-[13px] text-muted">
+        Không tìm thấy “{{ query.trim() }}”. Thử gõ tên đường, phường hoặc tên khác của địa điểm.
+      </div>
     </div>
   </div>
 </template>
